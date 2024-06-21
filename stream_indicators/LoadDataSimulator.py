@@ -2,7 +2,7 @@ import pandas as pd
 import yfinance as yf
 
 
-class LoadDataToStream:
+class LoadDataSimulator:
     dataframe: pd.DataFrame
 
     def __init__(self):
@@ -28,3 +28,6 @@ class LoadDataToStream:
             i = i + 1
 
         return data_period
+
+    def get_data_in_range(self, lower_border = 0, upper_border = 0):
+        return self.dataframe[lower_border:upper_border]
