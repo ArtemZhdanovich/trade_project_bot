@@ -1,6 +1,8 @@
 import pandas as pd
 import yfinance as yf
 
+#"AAPL", start="2023-06-14", end="2024-02-14", timeframe="1h"
+
 
 class LoadDataSimulator:
     dataframe: pd.DataFrame

@@ -22,12 +22,15 @@ def calc_stream_bbands_cycle(loadData, lenghts, stdev) -> pd.DataFrame:
 
 #default parameters
 loader = LoadDataSimulator()
-bollinger_len = 30
+bollinger_len = 5
 bollinger_stdev = 2
 stream_data_loader = StreamData(loader.get_data_in_range(upper_border=bollinger_len))
 data = loader.get_data().copy()
+etalon_data = loader.get_data().copy()
 var = pd.DataFrame()
 offset = 0
+
+print(etalon_data.equals(data))
 
 while var is not None:
 
@@ -43,16 +46,7 @@ while var is not None:
     stream_data_loader.update_data(var)
 
 
-etalon_data = loader.get_data().copy()
-etalon_data = BollindgerBands.calculate_bands(etalon_data, 30, 2)
-print(data['Lower Band'].equals(etalon_data['Lower Band']))
+etalon_data = BollindgerBands.calculate_bands(etalon_data, 5, 2)
+print(data.equals(etalon_data))
 
-"""
-print('\nEtalod data slice block\n\n')
-print(etalon_data[:30])
-print('\nEtalon data block end\n\n')
-print('\nCalculated data slice block\n\n')
-print(data[:30])
-print('\nCalculated data block end\n\n')
-"""
-print(etalon_data['Upper Band'].equals(data['Upper Band'] == False))
+
