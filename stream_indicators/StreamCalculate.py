@@ -20,29 +20,9 @@ class StreamCalculator:
             matype=0  # тип скользящей
         )
 
+        #print(upper_band.tail(1))
         return upper_band.tail(1), middle_band.tail(1), lower_band.tail(1)
 
-    @staticmethod
-    def calc_stream_bbands_cycle(loadData, lenghts, stdev) -> pd.DataFrame:
-        data_to_calculate = loadData.get_data_in_period(lenghts+1)
-        var = 0
-        offset = 0
-        ret_data = pd.DataFrame()
-        while var is not None:
-            var = loadData.get_data_by_str(lenghts + offset)
-            offset = offset + 1
-            if var is None:
-                break
-
-        return ret_data
-
-    @staticmethod
-    def calc_stream_bbands(data, new_bar, lenghts, stdev):
-        #data.drop(index=data.index[0], axis=0, inplace=True)
-        #data = pd.concat([data, new_bar])
-        upper_band, middle_band, lower_band = StreamCalculator.calc_static_bbands(data, lenghts, stdev)
-
-        return data, upper_band, middle_band, lower_band
 
 
 loadData = LoadDataSimulator()

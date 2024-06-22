@@ -43,7 +43,7 @@ class BollindgerBands:
 
 
     @staticmethod
-    def create_vizualization_bb(data, bb_data):
+    def create_vizualization_bb(data):
         """
         Creates a visualization of stock price with Bollinger Bands.
 
@@ -55,10 +55,10 @@ class BollindgerBands:
         """
         fig, ax = plt.subplots(figsize=(14, 7))  # Исправление здесь
         ax.plot(data.index, data['Close'], label='Цена закрытия', color='blue')
-        ax.plot(data.index, bb_data['Upper Band'], label='Верхняя полоса', color='red', linestyle='--')
-        ax.plot(data.index, bb_data['Middle Band'], label='Средняя полоса', color='black', linestyle='-.')
-        ax.plot(data.index, bb_data['Lower Band'], label='Нижняя полоса', color='green', linestyle='--')
-        ax.fill_between(data.index, bb_data['Upper Band'], bb_data['Lower Band'], color='grey', alpha=0.1)
+        ax.plot(data.index, data['Upper Band'], label='Верхняя полоса', color='red', linestyle='--')
+        ax.plot(data.index, data['Middle Band'], label='Средняя полоса', color='black', linestyle='-.')
+        ax.plot(data.index, data['Lower Band'], label='Нижняя полоса', color='green', linestyle='--')
+        ax.fill_between(data.index, data['Upper Band'], data['Lower Band'], color='grey', alpha=0.1)
         ax.legend()
         ax.set_title('Визуализация полос Боллинджера')
         ax.set_xlabel('Дата')
