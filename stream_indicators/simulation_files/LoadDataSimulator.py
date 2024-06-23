@@ -22,14 +22,5 @@ class LoadDataSimulator:
         else:
             return None
 
-    def get_data_in_period(self, period) -> pd.DataFrame:
-        data_period = pd.DataFrame(columns=self.dataframe.columns)
-        i = 0
-        while i < period:
-            data_period = data_period._append(self.get_data_by_str(i))
-            i = i + 1
-
-        return data_period
-
     def get_data_in_range(self, lower_border = 0, upper_border = 0):
         return self.dataframe[lower_border:upper_border]

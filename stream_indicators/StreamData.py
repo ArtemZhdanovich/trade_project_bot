@@ -1,14 +1,11 @@
 import pandas as pd
 
-from LoadDataSimulator import LoadDataSimulator
-
 
 class StreamData:
     dataframe: pd.DataFrame
 
     def __init__(self, dataframe):
         self.dataframe = dataframe.copy()
-
 
     def get_data(self) -> pd.DataFrame:
         return self.dataframe

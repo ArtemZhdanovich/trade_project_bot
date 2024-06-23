@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
+import pandas as pd
 import talib
+
+
 #from test_data_loading import LoadDataFromYF
 
 
@@ -11,9 +14,9 @@ class BollindgerBands:
     - calculate_bands(data, lenghts, stdev): Calculates Bollinger Bands based on the given data, lengths, and standard deviations.
     - create_vizualization_bb(data): Creates a visualization of stock price with Bollinger Bands.
     """
-    
+
     @staticmethod
-    def calculate_bands(data, lenghts, stdev):
+    def calculate_bands(data: pd.DataFrame, lenghts, stdev):
         """
         Calculates Bollinger Bands based on the given data, lengths, and standard deviations.
 
@@ -30,17 +33,25 @@ class BollindgerBands:
         # Рассчитываем полосы Боллинджера на основе среднего значения между High и Low
         upper_band, middle_band, lower_band = talib.BBANDS(
             high_low_average,
-            timeperiod=lenghts, # Defolt 20
-            nbdevup=stdev, # cтандарт 2
-            nbdevdn=stdev, # стандарт 2 не знаю нахуя тут два пункта
-            matype=0 # тип скользящей 
+            timeperiod=lenghts,  # Defolt 20
+            nbdevup=stdev,  # cтандарт 2
+            nbdevdn=stdev,  # стандарт 2 не знаю нахуя тут два пункта
+            matype=0  # тип скользящей
         )
         # Добавляем результаты в DataFrame
         data['Upper Band'] = upper_band
         data['Middle Band'] = middle_band
         data['Lower Band'] = lower_band
-        return data
 
+        last_bar = None
+        if data.tail(1) < upper_band.tail(1):
+            last_bar = 'cross_up'
+        if data.tail(1) > lower_band.tail(1):
+            last_bar = 'cross_down'
+        else:
+            last_bar = 0
+
+        return data, last_bar
 
     @staticmethod
     def create_vizualization_bb(data):
@@ -64,6 +75,7 @@ class BollindgerBands:
         ax.set_xlabel('Дата')
         ax.set_ylabel('Цена')
         plt.show()
+
 
 """
 #Пример использования

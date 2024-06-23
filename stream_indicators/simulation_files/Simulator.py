@@ -1,23 +1,10 @@
 import pandas as pd
 
-from LoadDataSimulator import LoadDataSimulator
-from StreamCalculate import StreamCalculator
-from StreamData import StreamData
+from stream_indicators.simulation_files.LoadDataSimulator import LoadDataSimulator
+from stream_indicators.StreamCalculate import StreamCalculator
+from stream_indicators.StreamData import StreamData
 from indicators.BollingerBands import BollindgerBands
 
-
-def calc_stream_bbands_cycle(loadData, lenghts, stdev) -> pd.DataFrame:
-    data_to_calculate = loadData.get_data_in_period(lenghts + 1)
-    var = 0
-    offset = 0
-    ret_data = pd.DataFrame()
-    while var is not None:
-        var = loadData.get_data_by_str(lenghts + offset)
-        offset = offset + 1
-        if var is None:
-            break
-
-    return ret_data
 
 
 #default parameters
@@ -34,7 +21,7 @@ print(etalon_data.equals(data))
 
 while var is not None:
 
-    upper_band, middle_band, lower_band = StreamCalculator.calc_static_bbands(stream_data_loader.get_data(), bollinger_len, bollinger_stdev)
+    upper_band, middle_band, lower_band = StreamCalculator.calc_bbands(stream_data_loader.get_data(), bollinger_len, bollinger_stdev)
     data.at[stream_data_loader.get_data().index[-1], 'Upper Band'] = upper_band.iloc[0]
     data.at[stream_data_loader.get_data().index[-1], 'Middle Band'] = middle_band.iloc[0]
     data.at[stream_data_loader.get_data().index[-1], 'Lower Band'] = lower_band.iloc[0]
