@@ -1,45 +1,81 @@
 from httpx import AsyncClient
 from abc import ABC, abstractmethod
-import contextlib
-import hmac, base64, hashlib
-from typing import Optional
+import hmac, base64, json, asyncio, logging
+from typing import Union
 from datetime import datetime, timezone
+from typing import Optional
 
+from Api import Exceptions
 
 class OKXClientAsync(ABC, AsyncClient):
-    def __init__(self, api_key:str='-1', secret_key:str='-1', passphrase:str='-1', flag:str='1', debug:bool='True', proxy:str=None):
-        self.base_url = 'https://www.okx.com'
-        AsyncClient.__init__(self, base_url=self._base_url, http2=True, proxy=proxy)
+    def __init__(self, init_url:str, api_key:str=None, secret_key:str=None, passphrase:str=None, flag:str='1', debug:bool=True, proxy:str=None, logger:Optional[logging.Logger]=None):
+        self.init_url = init_url
+        AsyncClient.__init__(self, base_url=self.init_url, http2=True, proxy=proxy)
         self.api_key = api_key
         self.secret_key = secret_key
         self.passphrase = passphrase
         self.flag = flag
         self.debug = debug
         self.proxy = proxy
+        self.logger = logger
 
 
-    @abstractmethod
-    async def make_request_async(self, request_path:str, body:str, method:str) -> dict:
+    async def __make_request_async(self, request_path:str, params:dict, method:str) -> dict:
         if method == 'GET':
-            request_path += self.__parse_params_to_str(params)
-        if self.api_key != '-1':
-            headers = await self.__create_headers(request_path, body, method)
+            request_path += await self.__parse_params_to_str(params)
+        timestamp = await self.__create_timestamp_headers_async()
+        if self.api_key:
+            body = json.dumps(params)
+            headers = await self.__create_headers(request_path, body, method, timestamp)
         else:
             headers = await self.__create_headers_no_sign()
         if self.debug:
-            print(f'{self.base_url}{request_path}')
+            self.logger.info(f'\n{self.init_url}{request_path}\n{headers}')
+            print(f'{self.init_url}{request_path}')
             print(headers)
-        if method == 'GET':
-            result = await self.get(f'{self.base_url}{request_path}', headers=headers)
-        elif method == 'POST':
-            result = await self.post(f'{self.base_url}{request_path}', headers=headers)
+        return  await self.__request_async(method, request_path, headers)
+
+
+    async def __request_async(self, method:str, request_path:str, headers:dict) -> dict:
+        try:
+            if method == 'GET':
+                result = await self.get(f'{self.init_url}{request_path}', headers=headers)
+            elif method == 'POST':
+                result = await self.post(f'{self.init_url}{request_path}', headers=headers)
+        except Exception as e:
+            print(f'Error:{e} at request:\n{self.init_url}{request_path} with headers:\n{headers}')
+            raise e
+        finally:
+            await self.aclose()
         return result.json()
 
 
-    async def __create_headers(self, request_path:Optional[str], body:Optional[str], method:Optional[str]) -> dict:
-        timestamp = await self.__create_timestamp_headers_async()
-        msg = f'{str(timestamp)}{str.upper(method)}{request_path}{body}'
-        signature = await self.__create_signature(self.secret_key, msg)
+    @abstractmethod
+    async def _request_with_params_async(self, method:str, request_path:str, params:str) -> dict:
+        result = await self.__make_request_async(method, request_path, params)
+        if self.debug:
+            print(result)
+        self.__check_result(result)
+        return result
+
+
+    @abstractmethod
+    async def _request_without_params(self, method:str, request_path:str) -> dict:
+        result = await self.__make_request_async(method, request_path, {})
+        if self.debug:
+            print(result)
+        self.__check_result(result)
+        return result
+
+
+    async def __check_result(self, result):
+        if result['code'] != '0':
+            raise ValueError(f'Get market data, code: {result['code']}')
+
+
+    async def __create_headers(self, request_path:str, body:str, method:str, timestamp:str) -> dict:
+        msg = f'{(timestamp)}{str.upper(method)}{request_path}{body}'
+        signature = await self.__create_signature(msg)
         return {
             'Content-Type': 'aplication/json', 'OK-ACCESS-KEY': self.api_key,
             'OK-ACCESS-SIGN': signature, 'OK-ACCESS-TIMESTAMP': timestamp,
@@ -51,23 +87,23 @@ class OKXClientAsync(ABC, AsyncClient):
         return {'Content-Type': 'application/json', 'x-simulated-trading': self.flag}
 
 
-    async def __create_signature(self, secret_key:str, msg:str):
-        return base64.b64encode(hmac.new(bytes(secret_key, encoding='utf8'),\
-            bytes(msg, encoding='utf-8'), digestmod='sha256'))
+    async def __create_signature(self, msg:str) -> bytes:
+        return base64.b64encode((hmac.new(bytes(self.secret_key, encoding='utf8'), bytes(msg, encoding='utf-8'), digestmod='sha256')).digest())
 
 
-    async def __create_timestamp_headers_async(self):
+    async def __create_timestamp_headers_async(self) -> str:
         return datetime.now(timezone.utc).replace(tzinfo=None).isoformat('T', 'milliseconds') + 'Z'
 
 
-    async def __parse_params_to_str(self):
+    async def __parse_params_to_str(self, params:dict) -> str:
         url = '?'
-        for key, value in self.items():
+        async for key, value in self.__async_generator(params.items()):
             if(value != ''):
                 url = url + str(key) + '=' + str(value) + '&'
-        return url[:-1]
+        return str(url[:-1])
 
 
-
-
-
+    async def __async_generator(self, dict_items:Union[str, int, float]):
+        for item in dict_items:
+            await asyncio.sleep(0)
+            yield item

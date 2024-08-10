@@ -14,9 +14,9 @@ def deprecated(func):
     При вызове функции будет выдано предупреждение."""
     @wraps(func)
     def new_func(*args, **kwargs):
-        warnings.simplefilter('always', DeprecationWarning)  # Включаем предупреждение
+        warnings.simplefilter('always', DeprecationWarning)
         warnings.warn(f"Вызов устаревшей функции {func.__name__}.", category=DeprecationWarning, stacklevel=2)
-        warnings.simplefilter('default', DeprecationWarning)  # Сбрасываем фильтр
+        warnings.simplefilter('default', DeprecationWarning)
         return func(*args, **kwargs)
     return new_func
 

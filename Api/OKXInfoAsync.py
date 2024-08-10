@@ -1,18 +1,17 @@
 #libs
-import json, contextlib, aiofiles
-from typing import Optional, Union
-from datetime import datetime
+import json
+from typing import Optional, List, Dict
 #functions
 from Api.Base.OKXClientAsync import OKXClientAsync
+from Api.Base.RequestsLinks import INFO
 from Cache.AioRedisCache import AioRedisCache
 from Configs.LoadSettings import LoadUserSettingData
 #utils
 from Api.Utils.Utils import ApiUtilsAsync
 from docx import Document
-from DataSets.Utils.DataFrameUtilsAsync import async_generator, async_validate_get_data_params
+from DataSets.Utils.DataFrameUtilsAsync import async_generator
 from BaseLogs.CustomLogger import create_logger
 from BaseLogs.CustomDecorators import retry_on_exception_async
-
 
 
 logger = create_logger('OKXInfoAsync')
@@ -23,22 +22,27 @@ class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
         self, instId:Optional[str]=None, timeframe:Optional[str]=None, lenghts:Optional[int]=None, 
         load_data_after:Optional[str]=None, load_data_before:Optional[str]=None, debug:Optional[bool]=True, proxy:str=None
         ):
-        ApiUtilsAsync.__init__(self)
+        self.debug = debug
         settings = LoadUserSettingData()
         api_settings = settings.load_api_setings()
         self.secret_key = api_settings['secret_key']
         self.api_key = api_settings['api_key']
         self.passphrase = api_settings['passphrase']
         self.flag = api_settings['flag']
-        self.debug = debug
-        OKXClientAsync.__init__(self, self.api_key, self.secret_key, self.passphrase, self.flag, self.debug, proxy)
-        AioRedisCache.__init__(self, key='contracts_prices')
         user_settings = settings.load_user_settings()
         self.leverage = user_settings['leverage']
         self.mgnMode = user_settings['mgnMode']
         self.risk = user_settings['risk']
         self.instIds = user_settings['instIds']
         self.timeframes = user_settings['timeframes']
+        ApiUtilsAsync.__init__(self, self.api_key, self.secret_key, self.passphrase, timeframe)
+        self.validate_timeframe_format()
+        init_url = 'https://www.okx.com'
+        OKXClientAsync.__init__(
+            self, init_url, self.api_key, self.secret_key,
+            self.passphrase, self.flag, self.debug, proxy, logger
+            )
+        AioRedisCache.__init__(self, key='contracts_prices')
         self.instId = instId
         self.timeframe= timeframe
         self.lenghts = lenghts
@@ -47,61 +51,54 @@ class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
 
 
     @retry_on_exception_async(logger=logger)
-    async def get_candlesticks_async(self) -> dict:
-        sign = True
-        params = await self.validate_get_data_params_async(self.lenghts, self.load_data_before, self.load_data_after, self.timeframe)
-        request_path = f'/api/v5/market/candles?instId={self.instId}&bar={self.timeframe}&limit={params}'
-        if self.load_data_after:
-            request_path += f'&after={params['after']}'
-        if self.load_data_before:
-            request_path += f'&before={params['before']}'
-        method = 'GET'
-        body = ''
-        result = await self.make_request_async(sign, request_path, body, method)
+    async def get_candlesticks(self) -> dict:
+        params_dict = await self.validate_get_data_params_async(self.lenghts, self.load_data_before, self.load_data_after, self.timeframe)
+        params = {
+            'instId': self.instId, 'after': params_dict['after'],
+            'before': params_dict['before'], 'bar': self.timeframe,
+            'limit': params['limit']
+        }
+        request_path = INFO['get_candlesticks']['url']
+        method = INFO['get_candlestics']['method']
+        result = await self._request_with_params_async(request_path, params, method)
         return result['data']
 
 
     @retry_on_exception_async(logger=logger)
-    async def get_account_balance_async(self) -> float:
-        sign = True
-        request_path = '/api/v5/account/balance'
-        method = 'GET'
-        body = ''
-        result = await self.make_request_async(sign, request_path, body, method)
+    async def get_account_balance(self, ccy:Optional[str]=None) -> float:
+        params = {}
+        if ccy:
+            params['ccy'] = ccy
+        request_path = INFO['get_account_balance']['url']
+        method = INFO['get_account_balance']['method']
+        result = await self._request_with_params_async(request_path, params, method)
         return float(result["data"][0]["details"][0]["availBal"])
 
 
     @retry_on_exception_async(logger=logger)
-    async def set_leverage_inst_async(self) -> int:
-        sign = True
+    async def set_leverage_inst(self) -> int:
         params = {'lever': self.leverage, 'mgnMode': self.mgnMode, 'instId': self.instId, 'ccy': '' , 'posSide': ''}
-        body = json.dumps(params)
-        request_path =  '/api/v5/account/set-leverage'
-        method = 'POST'
-        result = await self.make_request_async(sign, request_path, body, method)
+        request_path =  INFO['set_leverage_inst']['url']
+        method = INFO['set_leverage_inst']['method']
+        result = await self._request_with_params_async(request_path, params, method)
         return self.leverage
 
 
     @retry_on_exception_async(logger=logger)
-    async def set_leverage_short_long_async(self, posSide:Optional[str]):
-        sign = True
+    async def set_leverage_short_long(self, posSide:Optional[str]):
         params = {'lever': self.leverage, 'mgnMode': self.mgnMode, 'instId': self.instId, 'ccy': '' , 'posSide': posSide}
-        body = json.dumps(params)
-        request_path =  '/api/v5/account/set-leverage'
-        method = 'POST'
-        result = await self.make_request_async(sign, request_path, body, method)
+        request_path =  INFO['set_leverage_short_long']['url']
+        method = INFO['set_leverage_short_long']['method']
+        result = await self._request_with_params_async(request_path, params, method)
         return self.leverage
 
 
     @retry_on_exception_async(logger=logger)
-    async def check_contract_price_async(self, instId:Optional[str]='', filename:Optional[str]='SWAPINFO.docx', save:Optional[bool]=None) -> None:
-        sign = True
-        params = {'instType': 'SWAP', 'ugly': '', 'instFamily': '', 'instId': f'{instId}'}
-        print(params)
-        body = json.dumps(params)
-        request_path = '/api/v5/account/instruments'
-        method = 'GET'
-        result = await self.make_request_async(sign, request_path, body, method)
+    async def check_contract_price(self, instId:Optional[str]='', filename:Optional[str]='SWAPINFO.docx', save:Optional[bool]=None) -> None:
+        params = {'instType': 'SWAP', 'ugly': ' ', 'instFamily': ' ', 'instId': instId}
+        request_path = INFO['set_leverage_short_long']['url']
+        method = INFO['set_leverage_short_long']['method']
+        result = await self._request_with_params_async(request_path, params, method)
         if save:
             await self.save_swap_docx(result, filename)
         elif save == False:
@@ -115,7 +112,7 @@ class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
         raise ValueError('Object not founded')
 
     @retry_on_exception_async(logger=logger)
-    async def get_last_price_async(self, instId:str) -> float:
+    async def get_last_price(self, instId:str) -> float:
         sign = True
         request_path = f'/api/v5/market/ticker?instId={instId}'
         method = 'GET'
@@ -125,14 +122,14 @@ class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
 
 
     @retry_on_exception_async(logger=logger)
-    async def set_trading_mode_async(self) -> None:
+    async def set_trading_mode(self) -> None:
         sign = True
         params = {'posMode': 'long_short_mode'}
         method = 'POST'
         body = json.dumps(params)
         request_path = '/api/v5/account/set-position-mode'
         return await self.make_request_async(sign, request_path, body, method)
-
+    
 
 async def foo(): 
     market_data_api = OKXInfoFunctionsAsync('BTC-USDT-SWAP', '1m', 300)

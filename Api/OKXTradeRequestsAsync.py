@@ -12,10 +12,6 @@ from BaseLogs.CustomLogger import create_logger
 
 
 logger = create_logger('TradeRequestsAsync')
-retry_settings = LoadUserSettingData().load_retry_requests_configs()
-max_retries = retry_settings['max_retries']
-delay = retry_settings['delay']
-
 
 class OKXTradeRequestsAsync:
     def __init__(
