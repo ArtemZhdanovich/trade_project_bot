@@ -1,7 +1,6 @@
 *.env
 test.log
 TradeUserData.db
-.vscode
 .ipynb_checkpoints
 main-ipynb_checkpoint
 __pycache__
