@@ -50,7 +50,7 @@ class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
         self.load_data_before = load_data_before
 
 
-    @retry_on_exception_async(logger=logger)
+    @retry_on_exception_async(logger)
     async def get_candlesticks(self) -> dict:
         params_dict = await self.validate_get_data_params_async(self.lenghts, self.load_data_before, self.load_data_after, self.timeframe)
         params = {
@@ -64,7 +64,7 @@ class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
         return result['data']
 
 
-    @retry_on_exception_async(logger=logger)
+    @retry_on_exception_async(logger)
     async def get_account_balance(self, ccy:Optional[str]=None) -> float:
         params = {}
         if ccy:
@@ -75,7 +75,7 @@ class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
         return float(result["data"][0]["details"][0]["availBal"])
 
 
-    @retry_on_exception_async(logger=logger)
+    @retry_on_exception_async(logger)
     async def set_leverage_inst(self) -> int:
         params = {'lever': self.leverage, 'mgnMode': self.mgnMode, 'instId': self.instId, 'ccy': '' , 'posSide': ''}
         request_path =  INFO['set_leverage_inst']['url']
@@ -84,7 +84,7 @@ class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
         return self.leverage
 
 
-    @retry_on_exception_async(logger=logger)
+    @retry_on_exception_async(logger)
     async def set_leverage_short_long(self, posSide:Optional[str]):
         params = {'lever': self.leverage, 'mgnMode': self.mgnMode, 'instId': self.instId, 'ccy': '' , 'posSide': posSide}
         request_path =  INFO['set_leverage_short_long']['url']
@@ -93,7 +93,7 @@ class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
         return self.leverage
 
 
-    @retry_on_exception_async(logger=logger)
+    @retry_on_exception_async(logger)
     async def check_contract_price(self, instId:Optional[str]='', filename:Optional[str]='SWAPINFO.docx', save:Optional[bool]=None) -> None:
         params = {'instType': 'SWAP', 'ugly': ' ', 'instFamily': ' ', 'instId': instId}
         request_path = INFO['set_leverage_short_long']['url']
@@ -111,7 +111,7 @@ class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
             return float(instrument['ctVal']) if instrument['instId'] == instId else None
         raise ValueError('Object not founded')
 
-    @retry_on_exception_async(logger=logger)
+    @retry_on_exception_async(logger)
     async def get_last_price(self, instId:str) -> float:
         sign = True
         request_path = f'/api/v5/market/ticker?instId={instId}'
@@ -121,7 +121,7 @@ class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
         return float(result['data'][0]['last'])
 
 
-    @retry_on_exception_async(logger=logger)
+    @retry_on_exception_async(logger)
     async def set_trading_mode(self) -> None:
         sign = True
         params = {'posMode': 'long_short_mode'}

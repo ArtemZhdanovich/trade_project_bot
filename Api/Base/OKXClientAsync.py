@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import hmac, base64, json, asyncio, logging
 from typing import Union
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Dict
 
 from Api import Exceptions
 
@@ -47,7 +47,7 @@ class OKXClientAsync(ABC, AsyncClient):
             raise e
         finally:
             await self.aclose()
-        return result.json()
+        return {'status_code': result, 'result': result.json()}
 
 
     @abstractmethod
@@ -68,9 +68,9 @@ class OKXClientAsync(ABC, AsyncClient):
         return result
 
 
-    async def __check_result(self, result):
-        if result['code'] != '0':
-            raise ValueError(f'Get market data, code: {result['code']}')
+    async def __check_result(self, result:Dict[str, dict]):
+        if result['result']['code'] != '0':
+            raise ValueError(f'\n{result['code']}\nError, code:{result['result']['code']}\nMessage: {result['result']['msg']}')
 
 
     async def __create_headers(self, request_path:str, body:str, method:str, timestamp:str) -> dict:

@@ -8,7 +8,7 @@ INFO = {
     'get_last_price': {'method': 'GET', 'url': '/api/v5/market/ticker?instId='},
     'set_trading_mode': {'method': 'POST', 'url': '/api/v5/account/set-position-mode'}
 }
-#TIMEFRAMES
+#TIMEFRAMES FOR VALIDATE 
 TIMEFRAMES  = (
     '1m', '3m', '5m', '15m', '30m', '1H', '2H', '4H',
     '6H', '12H', '1D', '2D', '3D', '1W', '1M' '3M',

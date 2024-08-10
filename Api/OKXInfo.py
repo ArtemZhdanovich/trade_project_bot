@@ -65,7 +65,7 @@ class OKXInfoFunctions(RedisCache):
             raise ValueError(f'Get market data, code: {result['code']}')
 
 
-    @retry_on_exception()
+    @retry_on_exception(logger)
     def get_market_data(
         self, lengths:Union[int, str] = None, load_data_after:Optional[str]=None,
         load_data_before:Optional[str]=None
@@ -83,7 +83,7 @@ class OKXInfoFunctions(RedisCache):
         return result
 
 
-    @retry_on_exception()
+    @retry_on_exception(logger)
     def check_balance(self) -> float:
         self.__create_accountAPI()
         result = self.accountAPI.get_account_balance()
@@ -92,7 +92,7 @@ class OKXInfoFunctions(RedisCache):
 
 
     # Установка левериджа кросс позиций для отдельного инструмента
-    @retry_on_exception()
+    @retry_on_exception(logger)
     def set_leverage_inst(self) -> None:
         self.__create_accountAPI()
         result = self.accountAPI.set_leverage(
@@ -105,7 +105,7 @@ class OKXInfoFunctions(RedisCache):
 
 
     # Установка левериджа для \изолированых позиций для шорт и лонг
-    @retry_on_exception()
+    @retry_on_exception(logger)
     def set_leverage_short_long(self, posSide:str) -> None:
         self.__create_accountAPI()
         result = self.accountAPI.set_leverage(
@@ -118,7 +118,7 @@ class OKXInfoFunctions(RedisCache):
 
 
     # Установка режима торговли
-    @retry_on_exception()
+    @retry_on_exception(logger)
     def set_trading_mode(self) -> None:
         self.__create_accountAPI()
         result = self.accountAPI.set_position_mode(
@@ -127,7 +127,7 @@ class OKXInfoFunctions(RedisCache):
         self.__check_result(result)
 
 
-    @retry_on_exception()
+    @retry_on_exception(logger)
     def check_contract_price(self, save:Optional[bool]=None) -> None:
         self.__create_accountAPI()
         result = self.accountAPI.get_instruments(instType="SWAP")
@@ -146,7 +146,7 @@ class OKXInfoFunctions(RedisCache):
             if instrument['instId'] == instId),None,))
 
 
-    @retry_on_exception()
+    @retry_on_exception(logger)
     def check_instrument_price(self, instId:str) -> float:
         self.__create_marketAPI()
         result = self.marketDataAPI.get_ticker(instId)
