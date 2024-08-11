@@ -1,64 +1,68 @@
-#dataset
-from datasets.AioRedisCache import AioRedisCache
-from datasets.AsyncStatesDB import AsyncStateRequest
-#funtions
-from User.UserTradeFunctions import PlaceOrders
-from User.UserInfoFunctionsAsync import UserInfoAsync
-#utils
-from utils.CustomLogger import create_logger
+#libs
 import contextlib, time
-#logger
+from typing import Optional
+#datasets
+from DataSets.AsyncStatesDB import AsyncStateRequest
+#cache
+from Cache.AioRedisCache import AioRedisCache
+#funtions
+from Api.OKXInfoAsync import OKXInfoFunctionsAsync
+from Api.OKXTradeFunctions import PlaceOrders
+#utils
+from BaseLogs.CustomLogger import create_logger
+
+
 logger = create_logger('IventListner')
 
 
-
-
-
-def init_pos_data(message):
-    posSide = message['signal']
-    slPrice = message['slPrice']
-    return posSide, slPrice
-
-
-class OKXIventListner(AioRedisCache, AsyncStateRequest):
-    def __init__(self, orderId=str|None):
+class OKXIventListnerAsync(AioRedisCache, AsyncStateRequest):
+    def __init__(self, orderId:Optional[str]=None):
         AioRedisCache.__init__(key='positions')
         AsyncStateRequest.__init__()
         self.orderId = orderId
 
 
-    async def create_listner(self):
+    async def __find_index(self, positions:dict) -> int:
+        match self.timeframe:
+                case element_b if element_b in positions['timeframe']:
+                    index = positions['timeframe'].index(element_b)
+        return index
+
+
+    async def __update_pos_if(self, positions:dict, message:dict) -> dict:
+        try:
+            search_index = self.__find_index(positions)
+            positions['state'][search_index], positions['orderId'][search_index]  = message['state'], self.orderId
+            positions['strategy'][search_index], positions['status'][search_index] = message['strategy'], True
+            await self.update_state_async(positions)
+            return positions
+        except ValueError:
+            message['orderId'] = self.orderId
+            positions |= message
+            self.save_position_state_async(positions)
+            return positions
+
+
+    async def __update_pos_else(self, message:dict):
+        message['orderId'] = self.orderId
+        message = {key: [value] for key, value in message.items()}
+        positions = message
+        self.save_position_state_async(positions)
+        return positions
+
+
+    async def create_listner(self) -> None:
         self.async_subscribe_to_redis_channels()
         while True:
             try:
                 with contextlib.suppress(Exception):
                     message = await self.async_check_redis_message()
-                    self.instId = message['instId']
-                    self.timeframe = message['timeframe']
+                    self.instId, self.timeframe = message['instId'], message['timeframe']
                     self.orderId = PlaceOrders(message['instId'], None, message['signal'], None, message['slPrice'])
                     if positions := await self.async_load_message_from_cache():
-                        try:
-                            instIds_match_list = [i async for i, val in enumerate(positions['instId']) if val == self.instId]
-                            async for index in instIds_match_list:
-                                element_b = positions['timeframe'][index]
-                                is_match = element_b == self.timeframe
-                                if is_match:
-                                    search_index = index
-                                    break
-                            positions['state'][search_index] = message['state']
-                            positions['orderId'][search_index] = self.orderId
-                            positions['strategy'][search_index] = message['strategy']
-                            positions['status'][search_index] = True
-                            await self.update_state_async(positions)
-                        except ValueError:
-                            message['orderId'] = self.orderId
-                            positions.update(message)
-                            self.save_position_state_async(positions)
+                        positions = await self.__update_pos_if(positions, message)
                     else:
-                        message['orderId'] = self.orderId
-                        message = {key: [value] for key, value in message.items()}
-                        positions = message
-                        self.save_position_state_async(positions)
+                        positions = await self.__update_pos_else(message)
                     await self.async_send_redis_command(positions, self.key)
                 time.sleep(10)
             except Exception as e:
@@ -66,28 +70,22 @@ class OKXIventListner(AioRedisCache, AsyncStateRequest):
 
 
 
-    async def ivent_reaction(self, msg):
+    async def ivent_reaction(self, msg:dict) -> None:
         try:
             if msg['data'][0]:
-                data = {
-                    'orderId': msg['data'][0]['posId'],
-                    'pos': msg['data'][0]['pos'],
-                    'instId': msg['data'][0]['instId']
-                }
+                data = {'orderId': msg['data'][0]['posId'], 'pos': msg['data'][0]['pos'],
+                        'instId': msg['data'][0]['instId']}
                 if data['pos'] == '0':
                     positions = await self.async_load_message_from_cache()
-                    instIds_match_list = [i async for i, val in enumerate(positions['instId']) if val == self.instId]
-                    async for index in instIds_match_list:
-                        element_b = positions['timeframe'][index]
-                        is_match = element_b == data['orderId']
-                        if is_match:
-                            search_index = index
-                            break
-                    self.instId = data['instId'][search_index]
-                    self.timeframe = data['timeframe'][search_index]
-                    data['orderId'][search_index] = None
-                    data['priceClose'][search_index] = await UserInfoAsync().get_last_price_async(self.instId)
-                    await self.async_send_redis_command()
-                    await self.update_state_async(data)
+                    search_index = await self.__find_index(positions)
+                    await self.__add_db_close_data(data, search_index)
         except Exception as e:
             logger.error(f'Error:{e}')
+
+
+    async def __add_db_close_data(self, data:dict, search_index:int) -> None:
+        self.instId, self.timeframe  = data['instId'][search_index], data['timeframe'][search_index]
+        data['orderId'][search_index] = None
+        data['priceClose'][search_index] = await OKXInfoFunctionsAsync().get_last_price(self.instId)
+        await self.async_send_redis_command()
+        await self.update_state_async(data)

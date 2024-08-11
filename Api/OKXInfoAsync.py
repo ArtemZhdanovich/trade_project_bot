@@ -1,8 +1,7 @@
 #libs
-import json
-from typing import Optional, List, Dict
+from typing import Optional
 #functions
-from Api.Base.OKXClientAsync import OKXClientAsync
+from Api.Base.ClientAsync import ClientAsync
 from Api.Base.RequestsLinks import INFO
 from Cache.AioRedisCache import AioRedisCache
 from Configs.LoadSettings import LoadUserSettingData
@@ -17,7 +16,7 @@ from BaseLogs.CustomDecorators import retry_on_exception_async
 logger = create_logger('OKXInfoAsync')
 
 
-class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
+class OKXInfoFunctionsAsync(ClientAsync, AioRedisCache, ApiUtilsAsync):
     def __init__(
         self, instId:Optional[str]=None, timeframe:Optional[str]=None, lenghts:Optional[int]=None, 
         load_data_after:Optional[str]=None, load_data_before:Optional[str]=None, debug:Optional[bool]=True, proxy:str=None
@@ -38,7 +37,7 @@ class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
         ApiUtilsAsync.__init__(self, self.api_key, self.secret_key, self.passphrase, timeframe)
         self.validate_timeframe_format()
         init_url = 'https://www.okx.com'
-        OKXClientAsync.__init__(
+        ClientAsync.__init__(
             self, init_url, self.api_key, self.secret_key,
             self.passphrase, self.flag, self.debug, proxy, logger
             )
@@ -113,33 +112,33 @@ class OKXInfoFunctionsAsync(OKXClientAsync, AioRedisCache, ApiUtilsAsync):
 
     @retry_on_exception_async(logger)
     async def get_last_price(self, instId:str) -> float:
-        sign = True
-        request_path = f'/api/v5/market/ticker?instId={instId}'
-        method = 'GET'
-        body = ''
-        result = await self.make_request_async(sign, request_path, body, method)
+        params = {'instId': instId}
+        method = INFO['get_last_price']['method']
+        request_path = INFO['get_last_price']['url']
+        result = await self._request_with_params_async(request_path, params, method)
         return float(result['data'][0]['last'])
 
 
     @retry_on_exception_async(logger)
-    async def set_trading_mode(self) -> None:
-        sign = True
+    async def set_trading_mode(self) -> dict:
+        # sourcery skip: inline-immediately-returned-variable
         params = {'posMode': 'long_short_mode'}
-        method = 'POST'
-        body = json.dumps(params)
-        request_path = '/api/v5/account/set-position-mode'
-        return await self.make_request_async(sign, request_path, body, method)
-    
+        method = INFO['set_trading_mode']['method']
+        request_path = INFO['set_trading_mode']['url']
+        result = await self._request_with_params_async(request_path, params, method)
+        return result
 
+"""
 async def foo(): 
     market_data_api = OKXInfoFunctionsAsync('BTC-USDT-SWAP', '1m', 300)
-    balance = await market_data_api.get_account_balance_async()
+    balance = await market_data_api.get_account_balance()
     print(f'\nbalance:\n{balance}\n')
-    price = await market_data_api.check_contract_price_async()
+    price = await market_data_api.check_contract_price()
     print(f'\nprice:{price}\n')
 
 
 import asyncio
 if __name__ =='__main__':
     asyncio.run(foo())
+"""
 

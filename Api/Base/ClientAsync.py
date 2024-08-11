@@ -3,11 +3,10 @@ from abc import ABC, abstractmethod
 import hmac, base64, json, asyncio, logging
 from typing import Union
 from datetime import datetime, timezone
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 
-from Api import Exceptions
 
-class OKXClientAsync(ABC, AsyncClient):
+class ClientAsync(ABC, AsyncClient):
     def __init__(self, init_url:str, api_key:str=None, secret_key:str=None, passphrase:str=None, flag:str='1', debug:bool=True, proxy:str=None, logger:Optional[logging.Logger]=None):
         self.init_url = init_url
         AsyncClient.__init__(self, base_url=self.init_url, http2=True, proxy=proxy)
@@ -54,9 +53,9 @@ class OKXClientAsync(ABC, AsyncClient):
     async def _request_with_params_async(self, method:str, request_path:str, params:str) -> dict:
         result = await self.__make_request_async(method, request_path, params)
         if self.debug:
-            print(result)
-        self.__check_result(result)
-        return result
+            print(result['result'])
+            self.__check_result(result)
+        return result['result']
 
 
     @abstractmethod
@@ -70,7 +69,7 @@ class OKXClientAsync(ABC, AsyncClient):
 
     async def __check_result(self, result:Dict[str, dict]):
         if result['result']['code'] != '0':
-            raise ValueError(f'\n{result['code']}\nError, code:{result['result']['code']}\nMessage: {result['result']['msg']}')
+            raise ValueError(f'\n{result['status_code']}\nError, code:{result['result']['status_code']}\nMessage: {result['result']['msg']}')
 
 
     async def __create_headers(self, request_path:str, body:str, method:str, timestamp:str) -> dict:
@@ -103,7 +102,7 @@ class OKXClientAsync(ABC, AsyncClient):
         return str(url[:-1])
 
 
-    async def __async_generator(self, dict_items:Union[str, int, float]):
-        for item in dict_items:
+    async def __async_generator(self, items:Any):
+        for item in items:
             await asyncio.sleep(0)
             yield item

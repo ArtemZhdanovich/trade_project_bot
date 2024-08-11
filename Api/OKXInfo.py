@@ -152,5 +152,3 @@ class OKXInfoFunctions(RedisCache):
         result = self.marketDataAPI.get_ticker(instId)
         self.__check_result(result)
         return float(result['data'][0]['last'])
-    
-print(OKXInfoFunctions().check_instrument_price('BTC-USDT-SWAP'))

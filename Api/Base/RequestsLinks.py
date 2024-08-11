@@ -8,6 +8,18 @@ INFO = {
     'get_last_price': {'method': 'GET', 'url': '/api/v5/market/ticker?instId='},
     'set_trading_mode': {'method': 'POST', 'url': '/api/v5/account/set-position-mode'}
 }
+TRADE = {
+    'construct_market_order': {'method': 'POST', 'url': '/api/v5/trade/order'},
+    'construct_stoploss_order': {'method': 'POST', 'url': '/api/v5/trade/order-algo'},
+    'change_stoploss_order': {'method': 'POST', 'url': '/api/v5/trade/amend-algos'},
+    'construct_takeprofit_order': {'method': 'POST', 'url': '/api/v5/trade/order-algo'},
+    'change_takeprofit_order': {'method': 'POST', 'url': '/api/v5/trade/amend-algos'},
+    'construct_limit_order': {'method': 'POST', 'url': '/api/v5/trade/order'},
+    'check_position': {'method': 'GET', 'url': '/api/v5/trade/order'},
+    'get_all_order_list': {'method': 'GET', 'url': '/api/v5/trade/orders-pending'},
+    'get_all_opened_positions': {'method': 'GET', 'url': '/api/v5/account/positions'},
+    'get_history': {'method': 'GET', 'url': '/api/v5/account/positions'}
+}
 #TIMEFRAMES FOR VALIDATE 
 TIMEFRAMES  = (
     '1m', '3m', '5m', '15m', '30m', '1H', '2H', '4H',

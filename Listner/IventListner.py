@@ -1,12 +1,17 @@
+#libs
 import contextlib, time
 from typing import Optional
-from datasets.RedisCache import RedisCache
-from datasets.AioRedisCache import AioRedisCache
-from datasets.StatesDB import StateRequest
-from datasets.AsyncStatesDB import AsyncStateRequest
-from User.UserTradeFunctions import PlaceOrders
-from User.UserInfoFunctionsAsync import UserInfoAsync
-from utils.CustomLogger import create_logger
+#database
+from DataSets.StatesDB import StateRequest
+from DataSets.AsyncStatesDB import AsyncStateRequest
+#cache
+from Cache.RedisCache import RedisCache
+from Cache.AioRedisCache import AioRedisCache
+#functions
+from Api.OKXTradeFunctions import PlaceOrders
+from Api.OKXInfoAsync import OKXInfoFunctionsAsync
+#utils
+from BaseLogs.CustomLogger import create_logger
 logger = create_logger('IventListner')
 
 
@@ -81,7 +86,7 @@ class OKXIventListner(RedisCache, AioRedisCache):
                     self.instId = pos_data['instId'][search_index]
                     self.timeframe = pos_data['timeframe'][search_index]
                     pos_data['orderId'][search_index] = None
-                    pos_data['priceClose'][search_index] = await UserInfoAsync().get_last_price_async(pos_data['instId'])
+                    pos_data['priceClose'][search_index] = await OKXInfoFunctionsAsync().get_last_price(pos_data['instId'])
                     await self.async_send_redis_command()
                     await AsyncStateRequest(pos_data['instId'], pos_data['timeframe'],\
                         pos_data['strategy']).update_state_async(pos_data)

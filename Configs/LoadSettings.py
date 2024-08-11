@@ -1,6 +1,4 @@
-from inspect import signature
-import os, time, hmac, base64, hashlib
-from typing import Optional
+import os
 from dotenv import load_dotenv
 
 class LoadUserSettingData:
@@ -179,16 +177,3 @@ class LoadUserSettingData:
             'vwma_adx_adx_smooth': int(os.getenv('VWMAADXADXSMOOTH')),
             'vwma_adx_di_period': int(os.getenv('VWMAADXDIPERIOD'))
         }
-
-
-
-
-
-    async def create_signature_ws(self, secret_key:Optional[str]) -> dict:
-        timestamp = int(time.time())
-        sign = f'{timestamp}GET/users/self/verify'
-        total_params = bytes(sign, encoding='utf-8')
-        signature = hmac.new(bytes(secret_key, encoding='utf-8'), total_params, digestmod=hashlib.sha256).digest()
-        signature = base64.b64encode(signature)
-        signature = str(signature, 'utf-8')
-        return {'timestamp': timestamp, 'signature': signature}
