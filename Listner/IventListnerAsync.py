@@ -7,7 +7,7 @@ from DataSets.AsyncStatesDB import AsyncStateRequest
 from Cache.AioRedisCache import AioRedisCache
 #funtions
 from Api.OKXInfoAsync import OKXInfoFunctionsAsync
-from Api.OKXTradeFunctions import PlaceOrders
+from Api.OKXTradeFunctionsAsync import PlaceOrdersAsync
 #utils
 from BaseLogs.CustomLogger import create_logger
 
@@ -23,10 +23,14 @@ class OKXIventListnerAsync(AioRedisCache, AsyncStateRequest):
 
 
     async def __find_index(self, positions:dict) -> int:
-        match self.timeframe:
-                case element_b if element_b in positions['timeframe']:
-                    index = positions['timeframe'].index(element_b)
-        return index
+        instIds_match_list = [i for i, val in enumerate(positions['instId']) if val == self.instId]
+        for index in instIds_match_list:
+            element_b = positions['timeframe'][index]
+            is_match = element_b == self.timeframe
+            if is_match:
+                search_index = index
+                break
+        return search_index
 
 
     async def __update_pos_if(self, positions:dict, message:dict) -> dict:
@@ -58,12 +62,14 @@ class OKXIventListnerAsync(AioRedisCache, AsyncStateRequest):
                 with contextlib.suppress(Exception):
                     message = await self.async_check_redis_message()
                     self.instId, self.timeframe = message['instId'], message['timeframe']
-                    self.orderId = PlaceOrders(message['instId'], None, message['signal'], None, message['slPrice'])
+                    self.orderId = await PlaceOrdersAsync(message['instId'], None, message['signal'],\
+                        None, message['slPrice']).place_market_order_async()
                     if positions := await self.async_load_message_from_cache():
                         positions = await self.__update_pos_if(positions, message)
                     else:
                         positions = await self.__update_pos_else(message)
                     await self.async_send_redis_command(positions, self.key)
+                # возможно нужно использовать слип из асинцио
                 time.sleep(10)
             except Exception as e:
                 logger.error(f'Error:{e}')

@@ -2,12 +2,12 @@
 import time
 from threading import Thread
 import schedule
-from User.LoadSettings import LoadUserSettingData
-from utils.StartDelayCalculator import StartDelayCalc
-from User.Signals import AVSL_RSI_ClOUDS
+from Configs.LoadSettings import LoadUserSettingData
+from Signals.Signals import AVSL_RSI_ClOUDS
 
 
-settings = LoadUserSettingData.load_user_settings()
+
+settings = LoadUserSettingData().load_user_settings()
 scriner_instance1 = AVSL_RSI_ClOUDS(settings['instIds'][0], settings['timeframes'][0], 300)
 scriner_instance1.add_data_to_redis()
 scriner_instance2 = AVSL_RSI_ClOUDS(settings['instIds'][0], settings['timeframes'][1], 300)

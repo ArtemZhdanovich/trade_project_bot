@@ -72,20 +72,6 @@ def create_dataframe(data_list: dict) -> pd.DataFrame:
     return data_frame.sort_values(by='Date', ascending=True)
 
 
-def create_message_state_avsl_rsi_clouds(
-    instId:str, timeframe:str, avsl:float,
-    adx:Optional[float] = None, rsi:Optional[str]=None) -> dict:
-    return dict([
-        ('time', datetime.now().isoformat()),
-        ('instId', instId),
-        ('timeframe', timeframe),
-        ('strategy', 'avs_rsi_clouds'),
-        ('trend_strenghts', adx),
-        ('signal', rsi),
-        ('slPrice', avsl['last'])
-    ])
-
-
 def create_timestamp(time:Union[str, None]=None) -> int:
     if time is None:
         return

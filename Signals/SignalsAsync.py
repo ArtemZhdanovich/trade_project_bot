@@ -1,3 +1,4 @@
+# In Develop
 import sys
 sys.path.append('C://Users//Admin//Desktop//trade_project_bot')
 #settings
