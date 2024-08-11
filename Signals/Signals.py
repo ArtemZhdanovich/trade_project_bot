@@ -5,6 +5,7 @@ from datetime import datetime
 sys.path.append('C://Users//Admin//Desktop//trade_project_bot')
 #database
 from DataSets.StatesDB import StateRequest
+from DataSets.DataBase import DataAllDatasets
 #cache
 from Cache.RedisCache import RedisCache
 from Cache.LoadDataStream import StreamData
@@ -13,6 +14,7 @@ from Indicators.AVSL import AVSLIndicator
 from Indicators.ADX import ADXTrend
 from Indicators.RsiClouds import CloudsRsi
 #utils
+from DataSets.Utils.DataFrameUtils import prepare_many_data_to_append_db, create_dataframe
 from BaseLogs.CustomLogger import create_logger
 from BaseLogs.CustomDecorators import log_exceptions
 
@@ -53,8 +55,7 @@ class CheckActiveState(StreamData, RedisCache):
 
 
     def add_data_to_redis(self):
-        result = self.load_data()
-        prepare_df = prepare_many_data_to_append_db(result)
+        prepare_df = prepare_many_data_to_append_db(self.load_data())
         DataAllDatasets(self.instId, self.timeframe).save_charts(prepare_df)
         data = create_dataframe(prepare_df)
         self.add_data_to_cache(data)
