@@ -52,6 +52,15 @@ class CheckActiveState(StreamData, RedisCache):
             return None
 
 
+    def add_data_to_redis(self):
+        result = self.load_data()
+        prepare_df = prepare_many_data_to_append_db(result)
+        DataAllDatasets(self.instId, self.timeframe).save_charts(prepare_df)
+        data = create_dataframe(prepare_df)
+        self.add_data_to_cache(data)
+
+
+
 class AVSL_RSI_ClOUDS(CheckActiveState):
     def __init__ (self, instId:str, timeframe:str, lenghtsSt:int) -> None:
         self.strategy = 'avsl_rsi_clouds'
