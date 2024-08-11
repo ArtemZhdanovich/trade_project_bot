@@ -1,5 +1,6 @@
 #libs
 import sys
+from typing import Optional
 from datetime import datetime
 sys.path.append('C://Users//Admin//Desktop//trade_project_bot')
 #database
@@ -20,7 +21,7 @@ logger = create_logger('Signals')
 
 
 class CheckActiveState(StreamData, RedisCache):
-    def __init__(self, instId:str, timeframe:str, lenghtsSt:int, strategy:str):
+    def __init__(self, instId:str, timeframe:str, lenghtsSt:int, strategy:str) -> None:
         self.lenghtsSt, self.instId, self.timeframe, self.strategy  = lenghtsSt, instId, timeframe, strategy
         self.channel = f'channel_{self.instId}_{self.timeframe}'
         StreamData.__init__(self, self.instId, self.timeframe, self.lenghtsSt, None, None)
@@ -38,7 +39,7 @@ class CheckActiveState(StreamData, RedisCache):
         return search_index
 
 
-    def check_active_state(self):
+    def check_active_state(self) -> Optional[dict]:
         try:
             positions = self.load_message_from_cache()
             search_index = self.__find_index(positions)
@@ -52,7 +53,7 @@ class CheckActiveState(StreamData, RedisCache):
 
 
 class AVSL_RSI_ClOUDS(CheckActiveState):
-    def __init__ (self, instId:str, timeframe:str, lenghtsSt:int):
+    def __init__ (self, instId:str, timeframe:str, lenghtsSt:int) -> None:
         self.strategy = 'avsl_rsi_clouds'
         CheckActiveState.__init__(self, instId, timeframe, lenghtsSt, self.strategy)
         self.adx_trigger = 20
@@ -88,8 +89,7 @@ class AVSL_RSI_ClOUDS(CheckActiveState):
     def trailing_stoploss(self) -> None: #Базирован на индикаторе авсл
         data = self.load_data_from_cache()
         data = self.load_data_for_period(data)
-        indicator_avsl = AVSLIndicator(data).calculate_avsl()
-        self.avsl = indicator_avsl.calculate_avsl()
+        self.avsl = AVSLIndicator(data).calculate_avsl()
         self.adx, self.rsi_clouds = None
         message = self.__create_signal_message()
         self.publish_message(self.channel, message)
