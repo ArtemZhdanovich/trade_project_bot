@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
-from User.WebsocketsChannel import OKXWebsocketsChannel
+from WebSockets.OKXWebsocketsChannel import OKXWebsocketsChannel
 
 
 okx_channel = OKXWebsocketsChannel()

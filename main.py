@@ -5,7 +5,11 @@ def run_script(script_name):
     os.system(f'python {script_name}')
 
 if __name__ == '__main__':
-    scripts = ['scriner.py', 'listner.py', 'broker.py']
+    scripts = [
+        'scriner.py',
+        'listner.py',
+        'broker.py'
+    ]
     
     processes = []
     
