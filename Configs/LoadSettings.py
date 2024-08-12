@@ -85,16 +85,18 @@ class LoadUserSettingData:
     def load_rsi_clouds_configs(self) -> dict:
         load_dotenv()
         return {
-            'rsi_period': int(os.getenv('RSILENGHTS')),
-            'rsi_scalar': int(os.getenv('RSISCALAR')),
-            'rsi_drift': int(os.getenv('RSIDRIFT')),
-            'rsi_offset': int(os.getenv('RSIOFFSET')),
-            'macd_fast': int(os.getenv('MACDFAST')),
-            'macd_slow': int(os.getenv('MACDSLOW')),
-            'macd_signal': int(os.getenv('MACDSIGNAL')),
-            'macd_offset': int(os.getenv('MACDOFFSET')),
-            'calc_data': str(os.getenv('CALCDATA')),
-            'talib': bool(os.getenv('RSICLOUDSTALIBCONFIG'))
+            'rsi_period': int(os.getenv('RSICLOUDSRSILENGHTS')),
+            'rsi_scalar': int(os.getenv('RSICLOUDSRSISCALAR')),
+            'rsi_drift': int(os.getenv('RSICLOUDSRSIDRIFT')),
+            'rsi_offset': int(os.getenv('RSICLOUDSRSIOFFSET')),
+            'rsi_mamode': str(os.getenv('RSICLOUDSMAMODE')),
+            'rsi_talib_config': bool(os.getenv('RSICLOUDSRSITALIBCONFIG')),
+            'macd_fast': int(os.getenv('RSICLOUDSMACDFAST')),
+            'macd_slow': int(os.getenv('RSICLOUDSMACDSLOW')),
+            'macd_signal': int(os.getenv('RSICLOUDSMACDSIGNAL')),
+            'macd_offset': int(os.getenv('RSICLOUDSMACDOFFSET')),
+            'calc_data': str(os.getenv('RSICLOUDSCALCDATA')),
+            'macd_talib_config': bool(os.getenv('RSICLOUDSMACDTALIBCONFIG'))
         }
 
 

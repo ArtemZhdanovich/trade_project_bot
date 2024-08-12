@@ -14,11 +14,13 @@ from BaseLogs.CustomLogger import create_logger
 
 
 logger = create_logger(logger_name='DataBaseAsync')
-engine2 = create_async_engine("sqlite+aiosqlite:///./datasets/TradeUserDatasets.db")
+engine2 = create_async_engine("sqlite+aiosqlite:///./DataSets/TradeUserDatasets.db")
 AsyncSessionLocal = sessionmaker(bind=engine2, class_=AsyncSession)
 classes_dict = ClassCreation().create_classes(Base)
-Base.metadata.create_all(engine2)
 
+async def create_tables():
+    async with engine2.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 class DataAllDatasetsAsync:
     def __init__(self, instId:Optional[str]=None, timeframe:Optional[str]=None):

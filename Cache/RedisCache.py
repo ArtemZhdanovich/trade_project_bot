@@ -19,18 +19,11 @@ class RedisCache(Redis):
         key:Optional[str]=None, data:Optional[pd.DataFrame]=None
         ):
         db_settings = LoadUserSettingData().load_cache_settings()
-        self.host = db_settings['host']
-        self.port = db_settings['port']
-        self.db = db_settings['db']
-        Redis.__init__(self, host=self.host, port=self.port, db=self.db)
+        self.host, self.port, self.db = db_settings['host'], db_settings['port'], db_settings['db']
         user_settings = LoadUserSettingData().load_user_settings()
-        self.timeframes = user_settings['timeframes']
-        self.instIds = user_settings['instIds']
-        self.data = data
-        self.instId = instId
-        self.timeframe = timeframe
-        self.channel = channel
-        self.key = key
+        self.timeframes, self.instIds = user_settings['timeframes'], user_settings['instIds']
+        self.data, self.instId, self.timeframe, self.channel, self.key = data, instId, timeframe, channel, key
+        Redis.__init__(self, host=self.host, port=self.port, db=self.db)
 
 
     @log_exceptions(logger)
@@ -77,4 +70,7 @@ class RedisCache(Redis):
 
     @log_exceptions(logger)
     def load_message_from_cache(self) -> dict:
-        return pickle.loads(self.get(self.key))
+        if value := self.get(self.key) is not None:
+            return pickle.loads(value)
+        return None
+        

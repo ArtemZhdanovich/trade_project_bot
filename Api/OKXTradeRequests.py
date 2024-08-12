@@ -14,9 +14,6 @@ from BaseLogs.CustomLogger import create_logger
 
 
 logger = create_logger('TradeRequests')
-retry_settings = LoadUserSettingData().load_retry_requests_configs()
-max_retries = retry_settings['max_retries']
-delay = retry_settings['delay']
 
 
 class OKXTradeRequests:
@@ -63,8 +60,7 @@ class OKXTradeRequests:
             raise ValueError(f'Construct market order, code: {result['code']}')
 
 
-    @log_exceptions(logger)
-    @retry_on_exception(max_retries, delay)
+    @retry_on_exception(logger)
     def construct_market_order(self, side) -> dict:
         side = self.__check_pos_side()
         result = self.tradeAPI.place_order(
@@ -78,9 +74,7 @@ class OKXTradeRequests:
         return {'result': result, 'order_id': order_id, 'outTime': outTime}
 
 
-
-    @log_exceptions(logger)
-    @retry_on_exception(max_retries, delay)
+    @retry_on_exception(logger)
     def construct_stoploss_order(self) -> str:
         side = self.__check_pos_side()
         result = self.tradeAPI.place_algo_order(
@@ -92,8 +86,7 @@ class OKXTradeRequests:
         return result['data'][0]['ordId']
 
 
-    @log_exceptions(logger)
-    @retry_on_exception(max_retries, delay)
+    @retry_on_exception(logger)
     def change_stoploss_order(self, price:float, orderId:str) -> None:
         result = self.tradeAPI.amend_algo_order(
             instId=self.instId, algoId=orderId, newSlTriggerPx=str(price)
@@ -102,8 +95,7 @@ class OKXTradeRequests:
         return result
 
 
-    @log_exceptions(logger)
-    @retry_on_exception(max_retries, delay)
+    @retry_on_exception(logger)
     def construct_takeprofit_order(self) -> str:
         side = self.__check_pos_side()
         result = self.tradeAPI.place_algo_order(
@@ -115,8 +107,7 @@ class OKXTradeRequests:
         return result['data'][0]['ordId']
 
 
-    @log_exceptions(logger)
-    @retry_on_exception(max_retries, delay)
+    @retry_on_exception(logger)
     def change_takeprofit_order(self, tpPrice:float, orderId:str):
         result = self.tradeAPI.amend_algo_order(
             instId=self.instId, algoId=orderId, newTpTriggerPx=str(tpPrice)
@@ -125,8 +116,7 @@ class OKXTradeRequests:
         return result
 
 
-    @log_exceptions(logger)
-    @retry_on_exception(max_retries, delay)
+    @retry_on_exception(logger)
     def costruct_limit_order(self, price) -> dict:
         side = self.__check_pos_side()
         result = self.tradeAPI.place_order(
@@ -140,36 +130,32 @@ class OKXTradeRequests:
         return {'result': result, 'order_id': order_id, 'outTime': outTime}
 
 
-    @log_exceptions(logger)
-    @retry_on_exception(max_retries, delay)
+    @retry_on_exception(logger)
     def calculate_posSize(self) -> float:
         return ((OKXInfoFunctions().check_balance()) * self.leverage * self.risk) / self.slPrice
 
 
-    @log_exceptions(logger)
     def check_position(self, ordId) -> dict:
         result = self.tradeAPI.get_order(instId=self.instId, ordId=ordId)
         self.__check_result(result)
         return float(result["data"][0]["avgPx"])
 
 
-    @log_exceptions(logger)
-    @retry_on_exception(max_retries, delay)
+    @retry_on_exception(logger)
     def get_all_order_list(self) -> dict:
         result = self.tradeAPI.get_order_list()
         self.__check_result(result)
         return result
 
-    @log_exceptions(logger)
-    @retry_on_exception(max_retries, delay)
+
+    @retry_on_exception(logger)
     def get_all_opened_positions(self) -> dict:
         result = self.accountApi.get_positions()
         self.__check_result(result)
         return result
 
 
-    @log_exceptions(logger)
-    @retry_on_exception(max_retries, delay)
+    @retry_on_exception(logger)
     def get_history(self) -> dict:
         result = self.tradeAPI.get_fills(instType = 'SWAP') #скорее всего всегда SWAP
         self.__check_result(result)

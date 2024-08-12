@@ -26,28 +26,29 @@ class OKXIventListner(RedisCache, AioRedisCache):
 
 
     def __find_index(self, positions:dict) -> int:
-        instIds_match_list = [i for i, val in enumerate(positions['instId']) if val == self.instId]
-        for index in instIds_match_list:
-            element_b = positions['timeframe'][index]
-            is_match = element_b == self.timeframe
-            if is_match:
-                search_index = index
-                break
-        return search_index
+        try:
+            instIds_match_list = [i for i, val in enumerate(positions['instId']) if val == self.instId]
+            for index in instIds_match_list:
+                element_b = positions['timeframe'][index]
+                is_match = element_b == self.timeframe
+                if is_match:
+                    search_index = index
+                    break
+            return search_index
+        except Exception:
+            return None
 
 
     def __update_pos_if(self, positions:dict, message:dict):
-        try:
-            search_index = self.__find_index(positions)
+        if search_index := self.__find_index(positions):
             positions['state'][search_index], positions['orderId'][search_index] = message['state'], self.orderId
             positions['strategy'][search_index], positions['status'][search_index] = message['strategy'], True
             StateRequest(self.instId, self.timeframe, self.strategy).update_state(positions)
-            return positions
-        except ValueError:
+        else:
             message['orderId'] = self.orderId
             positions |= message
             StateRequest(self.instId, self.timeframe).save_position_state(positions)
-            return positions
+        return positions
 
 
     def __update_pos_else(self, message:dict):
@@ -84,8 +85,8 @@ class OKXIventListner(RedisCache, AioRedisCache):
                         'instId': msg['data'][0]['instId']}
                 if data['pos'] == '0':
                     positions = await self.async_load_message_from_cache()
-                    search_index = await self.__find_index_async(positions)
-                    await self.__add_db_close_data(data, search_index)
+                    if search_index := await self.__find_index_async(positions):
+                        await self.__add_db_close_data(data, search_index)
         except Exception as e:
             logger.error(f'Error:{e}')
 
@@ -99,11 +100,14 @@ class OKXIventListner(RedisCache, AioRedisCache):
 
 
     async def __find_index_async(self, positions:dict) -> int:
-        instIds_match_list = [i for i, val in enumerate(positions['instId']) if val == self.instId]
-        for index in instIds_match_list:
-            element_b = positions['timeframe'][index]
-            is_match = element_b == self.timeframe
-            if is_match:
-                search_index = index
-                break
-        return search_index
+        try:
+            instIds_match_list = [i for i, val in enumerate(positions['instId']) if val == self.instId]
+            for index in instIds_match_list:
+                element_b = positions['timeframe'][index]
+                is_match = element_b == self.timeframe
+                if is_match:
+                    search_index = index
+                    break
+            return search_index
+        except Exception:
+            return None

@@ -9,13 +9,9 @@ from Signals.Signals import AVSL_RSI_ClOUDS
 
 settings = LoadUserSettingData().load_user_settings()
 scriner_instance1 = AVSL_RSI_ClOUDS(settings['instIds'][0], settings['timeframes'][0], 300)
-scriner_instance1.add_data_to_redis()
 scriner_instance2 = AVSL_RSI_ClOUDS(settings['instIds'][0], settings['timeframes'][1], 300)
-scriner_instance2.add_data_to_redis()
 scriner_instance3 = AVSL_RSI_ClOUDS(settings['instIds'][0], settings['timeframes'][2], 300)
-scriner_instance3.add_data_to_redis()
 scriner_instance4 = AVSL_RSI_ClOUDS(settings['instIds'][0], settings['timeframes'][3], 300)
-scriner_instance4.add_data_to_redis()
 
 
 def check_signal(scriner_instance):

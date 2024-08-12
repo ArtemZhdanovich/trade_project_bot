@@ -25,7 +25,7 @@ class CloudsRsi:
         self.macd_slow = settings['macd_slow']
         self.macd_signal = settings['macd_signal']
         self.macd_offset = settings['macd_offset']
-        self.macd_talib_config = settings['talib']
+        self.macd_talib_config = settings['macd_talib_config']
         self.calc_data = settings['calc_data']
         self.data = data
 

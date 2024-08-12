@@ -1,11 +1,10 @@
 #libs
 import sys
-from typing import Optional
+from typing import Optional, Any
 from datetime import datetime
 sys.path.append('C://Users//Admin//Desktop//trade_project_bot')
 #database
 from DataSets.StatesDB import StateRequest
-from DataSets.DataBase import DataAllDatasets
 #cache
 from Cache.RedisCache import RedisCache
 from Cache.LoadDataStream import StreamData
@@ -14,7 +13,6 @@ from Indicators.AVSL import AVSLIndicator
 from Indicators.ADX import ADXTrend
 from Indicators.RsiClouds import CloudsRsi
 #utils
-from DataSets.Utils.DataFrameUtils import prepare_many_data_to_append_db, create_dataframe
 from BaseLogs.CustomLogger import create_logger
 from BaseLogs.CustomDecorators import log_exceptions
 
@@ -26,39 +24,32 @@ class CheckActiveState(StreamData, RedisCache):
     def __init__(self, instId:str, timeframe:str, lenghtsSt:int, strategy:str) -> None:
         self.lenghtsSt, self.instId, self.timeframe, self.strategy  = lenghtsSt, instId, timeframe, strategy
         self.channel = f'channel_{self.instId}_{self.timeframe}'
-        StreamData.__init__(self, self.instId, self.timeframe, self.lenghtsSt, None, None)
-        RedisCache.__init__(self, self.instId, self.timeframe, self.channel, key='positions')
+        self.key = 'positions'
+        StreamData.__init__(self, self.instId, self.timeframe, self.lenghtsSt, None, None, self.channel, self.key)
+        self.load_data()
         
     
-    def __find_index(self, positions:dict) -> int:
-        instIds_match_list = [i for i, val in enumerate(positions['instId']) if val == self.instId]
-        for index in instIds_match_list:
-            element_b = positions['timeframe'][index]
-            is_match = element_b == self.timeframe
-            if is_match:
-                search_index = index
-                break
-        return search_index
+    def __find_position_data(self) -> Any:
+        if positions := self.load_message_from_cache():
+            instIds_match_list = [i for i, val in enumerate(positions['instId']) if val == self.instId]
+            for index in instIds_match_list:
+                element_b = positions['timeframe'][index]
+                is_match = element_b == self.timeframe
+                if is_match:
+                    search_index = index
+                    break
+            return positions['state'][search_index]
+        return None
 
 
     def check_active_state(self) -> Optional[dict]:
-        try:
-            positions = self.load_message_from_cache()
-            search_index = self.__find_index(positions)
-            return positions['state'][search_index]
-        except Exception:
-            state_instance = StateRequest(self.instId, self.timeframe, self.strategy)
-            if state_params := state_instance.check_state():
-                return state_params['state']
-            state_instance.save_none_state()
-            return None
-
-
-    def add_data_to_redis(self):
-        prepare_df = prepare_many_data_to_append_db(self.load_data())
-        DataAllDatasets(self.instId, self.timeframe).save_charts(prepare_df)
-        data = create_dataframe(prepare_df)
-        self.add_data_to_cache(data)
+        if state := self.__find_position_data():
+            return state
+        state_instance = StateRequest(self.instId, self.timeframe, self.strategy)
+        if state := state_instance.check_state():
+            return state
+        state_instance.save_none_state()
+        return None
 
 
 

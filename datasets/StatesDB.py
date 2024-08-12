@@ -22,15 +22,15 @@ class StateRequest:
         self.strategy = strategy
 
     @log_exceptions(logger)
-    def __process_data_check_state(self, session:sessionmaker):
-        last_state = session.query(SQLStateStorage).filter_by(
+    def __process_data_check_state(self, session:sessionmaker) -> Optional[str]:
+        if last_state := session.query(SQLStateStorage).filter_by(
             INST_ID=self.instId, TIMEFRAME=self.timeframe,
             STRATEGY=self.strategy
-        ).first()
-        return ({'state': last_state.POSITION,} if last_state else {'state': None,})
+        ).first():
+            return last_state.POSITION
+        return None
 
-
-    def check_state(self) -> dict:
+    def check_state(self) -> Optional[str]:
         with Session() as session:
             return self.__process_data_check_state(session)
 

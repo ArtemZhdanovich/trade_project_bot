@@ -13,7 +13,7 @@ from BaseLogs.CustomLogger import create_logger
 
 
 logger = create_logger(logger_name='DataBase')
-engine = create_engine("sqlite:///./datasets/TradeUserDatasets.db")
+engine = create_engine("sqlite:///./DataSets/TradeUserDatasets.db")
 Session = sessionmaker(bind=engine)
 classes_dict = ClassCreation().create_classes(Base)
 Base.metadata.create_all(engine)
@@ -48,7 +48,7 @@ class DataAllDatasets:
 
     @log_exceptions(logger)
     def __process_data_save_charts(self, session:sessionmaker, results_dict:dict, active_class):
-        for i in range(len(results_dict,['Date'])):
+        for i in range(len(results_dict['Date'])):
             target_data = session.query(exists().where(active_class.TIMESTAMP == results_dict['Date'][i])).scalar()
             if not target_data:
                 data = active_class(
