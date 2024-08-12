@@ -6,10 +6,10 @@ from sqlalchemy.sql import exists
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 #database
-from DataSets.ClassesCreation import Base, ClassCreation, TradeUserData
+from datasets.tables import Base, ClassCreation, TradeUserData
 #utils
-from BaseLogs.CustomDecorators import log_exceptions
-from BaseLogs.CustomLogger import create_logger
+from baselogs.custom_decorators import log_exceptions
+from baselogs.custom_logger import create_logger
 
 
 logger = create_logger(logger_name='DataBase')

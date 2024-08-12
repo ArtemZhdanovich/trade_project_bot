@@ -1,11 +1,11 @@
 import pandas as pd
-from User.UserInfoFunctions import UserInfo
+from api.okx_info import OKXInfoFunctions
 from datasets.database import DataAllDatasets
-from utils.DataFrameUtils import generate_time_points, prepare_many_data_to_append_db
+from datasets.utils.dataframe_utils import generate_time_points, prepare_many_data_to_append_db
 
 
 bd = DataAllDatasets('ETH-USDT-SWAP', '4H')
-get = UserInfo('ETH-USDT-SWAP', '4H')
+get = OKXInfoFunctions('ETH-USDT-SWAP', '4H')
 dates = generate_time_points(20)
 for date in dates:
     print(date)

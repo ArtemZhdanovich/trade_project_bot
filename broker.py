@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from Configs.LoadSettings import LoadUserSettingData
-from Listner.IventListner import OKXIventListner
+from configs.load_settings import LoadUserSettingData
+from listners.ivent_listner import OKXIventListner
 
 
 if __name__ == '__main__':

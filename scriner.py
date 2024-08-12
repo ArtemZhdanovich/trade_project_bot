@@ -2,8 +2,8 @@
 import time
 from threading import Thread
 import schedule
-from Configs.LoadSettings import LoadUserSettingData
-from Signals.Signals import AVSL_RSI_ClOUDS
+from configs.load_settings import LoadUserSettingData
+from strateges.signals import AVSL_RSI_ClOUDS
 
 
 
