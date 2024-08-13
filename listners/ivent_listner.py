@@ -2,16 +2,16 @@
 import contextlib, time
 from typing import Optional
 #database
-from DataSets.StatesDB import StateRequest
-from DataSets.AsyncStatesDB import AsyncStateRequest
+from datasets.states_db import StateRequest
+from datasets.async_states_db import AsyncStateRequest
 #cache
-from Cache.RedisCache import RedisCache
-from Cache.AioRedisCache import AioRedisCache
+from cache.redis_cache import RedisCache
+from cache.aioredis_cache import AioRedisCache
 #functions
-from Api.OKXTradeFunctions import PlaceOrders
-from Api.OKXInfoAsync import OKXInfoFunctionsAsync
+from api.okx_trade import PlaceOrders
+from api.okx_info_async import OKXInfoFunctionsAsync
 #utils
-from BaseLogs.CustomLogger import create_logger
+from baselogs.custom_logger import create_logger
 logger = create_logger('IventListner')
 
 
@@ -62,8 +62,8 @@ class OKXIventListner(RedisCache, AioRedisCache):
     def create_listner(self):
         self.subscribe_to_redis_channels()
         while True:
-            try:
-                with contextlib.suppress(Exception):
+            with contextlib.suppress(Exception):
+                try:
                     message = self.check_redis_message()
                     self.instId, self.timeframe, self.strategy  = message['instId'], message['timeframe'], message['strategy']
                     self.orderId = PlaceOrders(message['instId'], None, message['signal'],\
@@ -73,9 +73,10 @@ class OKXIventListner(RedisCache, AioRedisCache):
                     else:
                         positions = self.__update_pos_else(message)
                     self.send_redis_command(positions, self.key)
+                except Exception as e:
+                    print(e)
+                    logger.error(f'Error:{e}')
                 time.sleep(10)
-            except Exception as e:
-                logger.error(f'Error:{e}')
 
 
     async def ivent_reaction(self, msg:dict) -> None:

@@ -42,8 +42,8 @@ def retry_on_exception(
                     logger.error(f'Attempt {attempt + 1} failed with exception: {e}\n Retrying in {delay} seconds...')
                     print(f'Attempt {attempt + 1} failed with exception: {e}\n Retrying in {delay} seconds...')
                     time.sleep(delay)
-            logger.error(f'Failed after {max_retries} retries with exception: {e}')
-            raise e(f'Failed after {max_retries} retries')
+                    if attempt == max_retries:
+                        raise e(f'Failed after {max_retries} retries')
         return wrapper
     return decorator
 
@@ -61,8 +61,8 @@ def retry_on_exception_async(
                     logger.error(f'Attempt {attempt + 1} failed with exception: {e}\n Retrying in {delay} seconds...')
                     print(f'Attempt {attempt + 1} failed with exception: {e}\n Retrying in {delay} seconds...')
                     await asyncio.sleep(delay)
-            logger.error(f'Failed after {max_retries} retries with exception: {e}')
-            raise e(f'Failed after {max_retries} retries')
+                    if attempt == max_retries:
+                        raise e(f'Failed after {max_retries} retries')
         return wrapper
     return decorator
 
@@ -97,8 +97,8 @@ def log_exceptions_async(
                         await session.rollback()
                 else:
                     logger.error(f"Error in {function_name}: {e}")
-                if debug:
-                    raise e
+                    if debug:
+                        raise e
         return wrapper
     return decorator
 

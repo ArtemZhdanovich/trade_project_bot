@@ -13,7 +13,7 @@ from baselogs.custom_logger import create_logger
 
 
 logger = create_logger(logger_name='DataBase')
-engine = create_engine("sqlite:///./DataSets/TradeUserDatasets.db")
+engine = create_engine("sqlite:///TradeUserDatasets.db")
 Session = sessionmaker(bind=engine)
 classes_dict = ClassCreation().create_classes(Base)
 Base.metadata.create_all(engine)
@@ -26,7 +26,7 @@ class DataAllDatasets:
 
 
     @log_exceptions(logger)
-    def __prosess_data_get_all_bd_marketdata(self, session:sessionmaker, table) -> None:
+    def __prosess_data_get_all_bd_marketdata(self, session:sessionmaker, table) -> dict:
             query = session.query(
                 table.c.TIMESTAMP, table.c.OPEN, table.c.CLOSE,
                 table.c.HIGH, table.c.LOW, table.c.VOLUME,

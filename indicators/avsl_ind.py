@@ -9,6 +9,10 @@ from baselogs.custom_logger import create_logger
 from baselogs.custom_decorators import log_exceptions
 
 
+from datasets.database_async import DataAllDatasetsAsync
+from datasets.utils.dataframe_utils_async import prepare_many_data_to_append_db_async, create_dataframe_async
+
+
 logger = create_logger('AVSL')
 
 class AVSLIndicator:
@@ -36,8 +40,8 @@ class AVSLIndicator:
         self.data['VPCI'] = self.data['VPC'] * self.data['VPR'] * self.data['VM']
         PriceV = self.price_fun()
         DeV = self.standDiv * self.data['VPCI'] * self.data['VM']
-        AVSL = sma(self.data['Low'] - PriceV + DeV, timeperiod=self.lenghtsSlow, talib=True)
-        return self.data, AVSL
+        avsl = sma(self.data['Low'] - PriceV + DeV, timeperiod=self.lenghtsSlow, talib=True)
+        return self.data, avsl
 
 
     @log_exceptions(logger)
@@ -76,3 +80,16 @@ class AVSLIndicator:
         ax1.set_xlabel('Дата')
         ax1.set_ylabel('Цена')
         plt.show()
+
+async def main():
+    instance_db = DataAllDatasetsAsync('BTC-USDT-SWAP', '1D')
+    data = await instance_db.get_all_bd_marketdata_async()
+    print(data)
+    df = await create_dataframe_async(data)
+    print(df)
+    instance_ind = AVSLIndicator(df)
+    data, avsl = await instance_ind.calculate_avsl_async()
+    print(avsl)
+
+if __name__ == '__main__':
+    asyncio.run(main())

@@ -103,18 +103,16 @@ def validate_get_data_params(
         load_data_after = create_timestamp(load_data_after)
     with contextlib.suppress(Exception):
         load_data_before = create_timestamp(load_data_before)
-    if lengths>300:
+    if isinstance(lengths, int) and lengths>300:
         raise ValueError('Lenght 300 is max')
-    if (
-        lengths is None
-        or load_data_after is not None
-        and load_data_before is not None
-    ):
-        raise ValueError('Check params for get market data download')
+    if isinstance(lengths, (str, type(None))):
+        lengths = ''
     limit = lengths or ' '
     before = load_data_before or ' '
     after = load_data_after or ' '
     return {'limit': limit, 'before': before, 'after': after}
+
+
 
 
 def generate_time_points(num_groups: int, timeframe:Optional[str] = None) -> list:
