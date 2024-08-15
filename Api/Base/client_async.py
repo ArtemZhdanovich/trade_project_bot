@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from httpx import AsyncClient
 
 
-class ClientAsync(ABC, AsyncClient):
+class ClientAsync(AsyncClient, ABC):
     def __init__(self, init_url:str, api_key:str=None, secret_key:str=None, passphrase:str=None, flag:str='1', debug:bool=True, proxy:str=None, logger:Optional[logging.Logger]=None):
         self.init_url = init_url
         AsyncClient.__init__(self, base_url=self.init_url, http2=True, proxy=proxy)
@@ -38,14 +38,14 @@ class ClientAsync(ABC, AsyncClient):
         try:
             if method == 'GET':
                 result = await self.get(f'{self.init_url}{request_path}', headers=headers)
+                return {'status_code': result, 'result': result.json()}
             elif method == 'POST':
                 result = await self.post(f'{self.init_url}{request_path}', headers=headers)
+                return {'status_code': result, 'result': result.json()}
         except Exception as e:
             print(f'Error:{e} at request:\n{self.init_url}{request_path} with headers:\n{headers}')
             raise e
-        finally:
-            await self.aclose()
-        return {'status_code': result, 'result': result.json()}
+        
 
 
     @abstractmethod

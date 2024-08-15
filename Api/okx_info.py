@@ -5,6 +5,7 @@ import okx.Account as Account, okx.MarketData as MarketData, pandas as pd
 from configs.load_settings import LoadUserSettingData
 #cache
 from cache.redis_cache import RedisCache
+from datasets.database import DataAllDatasets
 #utils
 from docx import Document
 from datasets.utils.dataframe_utils import validate_get_data_params
@@ -18,7 +19,7 @@ logger = create_logger('OKXInfo')
 у которого есть разрешения на вывод и торговлю(отдельно),
 то он автоматически удалиться через 14 дней.
 """
-class OKXInfoFunctions(RedisCache):
+class OKXInfoFunctions(RedisCache, DataAllDatasets):
     def __init__(
         self, instId:Optional[str]=None, timeframe:Optional[str]=None, lenghts:Optional[int]=None, 
         load_data_after:Optional[str]=None, load_data_before:Optional[str]=None
@@ -41,6 +42,7 @@ class OKXInfoFunctions(RedisCache):
         self.instIds = user_settings['instIds']
         self.timeframes = user_settings['timeframes']
         self.format = MultilineJSONFormatter()
+        DataAllDatasets.__init__(self, instId, timeframe)
 
 
 

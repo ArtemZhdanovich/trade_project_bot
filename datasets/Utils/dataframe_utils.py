@@ -103,9 +103,9 @@ def validate_get_data_params(
         load_data_after = create_timestamp(load_data_after)
     with contextlib.suppress(Exception):
         load_data_before = create_timestamp(load_data_before)
-    if not history and isinstance(lengths, int) and lengths > 100:
+    if not history and isinstance(lengths, int) and lengths > 300:
         raise ValueError('Lenght 300 for method get candlestick history is max')
-    if history and isinstance(lengths, int) and lengths > 300:
+    if history and isinstance(lengths, int) and lengths > 100:
         raise ValueError('Lenght 100 for method get candlestick history is max')
     if isinstance(lengths, (str, type(None))):
         lengths = ''

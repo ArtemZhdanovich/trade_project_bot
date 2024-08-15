@@ -1,24 +1,30 @@
 import sys
 sys.path.append('C://Users//Admin//Desktop//trade_project_bot')
-import pandas as pd, okx.MarketData as MarketData
+import pandas as pd
 from api.okx_info import OKXInfoFunctions
 from datasets.database import DataAllDatasets
-from datasets.utils.dataframe_utils import prepare_many_data_to_append_db, generate_time_points
-from configs.load_settings import LoadUserSettingData
-
-api_settings = LoadUserSettingData().load_api_setings()
-flag = api_settings['flag']
-marketDataAPI = MarketData.MarketAPI(flag=flag)
+from datasets.utils.dataframe_utils import prepare_many_data_to_append_db, generate_time_points, create_timestamp
 
 
-bd = DataAllDatasets('ETH-USDT-SWAP', '4H')
-get = OKXInfoFunctions('ETH-USDT-SWAP', '4H')
-dates = generate_time_points(5)
-for date in dates:
-    result = marketDataAPI.get_candlesticks('ETH-USDT-SWAP', f'{date}', None, '4H', 100 )
-    data = prepare_many_data_to_append_db(result)
-    bd.save_charts(data)
+import okx.MarketData as MarketData
+marketApi = MarketData.MarketAPI(flag = '1') #Demo
+dates = generate_time_points(22) #return list of Timestamps, format '14994040312' str
+timestamps =[]
+for timestamp in dates:
+    x = create_timestamp(timestamp)
+    timestamps.append(x)
+print(dates[2] == dates[21]) #returns False
+print(dates)
+a = marketApi.get_history_candlesticks('ETH-USDT', timestamps[0], timestamps[10], '1H', ' ')
+print(a)
+b = marketApi.get_history_candlesticks('ETH-USDT', timestamps[0], timestamps[10], '1H', ' ')
+print(b)
+print(a==b) #returns True
+"""
+data = prepare_many_data_to_append_db(result)
+bd.save_charts(data)
 r = bd.get_all_bd_marketdata()
 df = pd.DataFrame(r)
 df.set_index('Date', inplace=True)
 print(df)
+"""

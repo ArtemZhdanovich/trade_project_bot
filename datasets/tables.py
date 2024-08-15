@@ -1,5 +1,5 @@
 #libs
-from sqlalchemy import create_engine, MetaData, Column, Integer, String, DateTime, Numeric, Boolean, Float
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Numeric, Boolean, Float
 from sqlalchemy.sql import text
 from sqlalchemy.orm import declarative_base, sessionmaker
 #configs
