@@ -76,26 +76,28 @@ def log_exceptions_async(
         async def wrapper(*args, **kwargs):
             if not create_logging:
                 return
-            try:
-                return await func(*args, **kwargs)
-            except Exception as e:
-                function_name = func.__name__
-                session = None
-                for arg in args:
-                    if isinstance(arg, AsyncSession):
-                        session = arg
-                        break
-                if not session:
-                    for key, value in kwargs.items():
-                        if isinstance(value, AsyncSession):
-                            session = value
-                            break
-                if args and hasattr(args[0], '__class__'):
-                    class_name = args[0].__class__.__name__
-                    logger.error(f"Error in {class_name}.{function_name}: {e}")
-                    if class_name == 'DataBaseAsync' or 'AsyncStateRequest' and session:
+            session = None
+            for arg in args:
+                if isinstance(arg, AsyncSession):
+                    session = arg
+                    break
+            function_name = func.__name__
+            if args and hasattr(args[0], '__class__'):
+                class_name = args[0].__class__.__name__
+                if class_name == 'DataAllDatasetsAsync' or 'AsyncStateRequest' and session:
+                    try:
+                        return await func(*args, **kwargs)
+                    except Exception as e:
+                        logger.error(f"Error in {function_name}: {e}")
                         await session.rollback()
-                else:
+                        if debug:
+                            raise e
+                    finally:
+                        await session.aclose()
+            else:
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
                     logger.error(f"Error in {function_name}: {e}")
                     if debug:
                         raise e
@@ -103,37 +105,37 @@ def log_exceptions_async(
     return decorator
 
 
-def log_exceptions(
-    logger:logging.Logger, create_logging:Optional[bool]=debug_logging_settings['write_logs'],
-    debug:bool=debug_logging_settings['debug']
-    ):
+def log_exceptions(logger: logging.Logger, create_logging: Optional[bool] = debug_logging_settings['write_logs'], debug: bool = debug_logging_settings['debug']):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             if not create_logging:
-                return
-            try:
                 return func(*args, **kwargs)
-            except Exception as e:
-                function_name = func.__name__
-                session = None
-                for arg in args:
-                    if isinstance(arg, sessionmaker):
-                        session = arg
-                        break
-                if not session:
-                    for key, value in kwargs.items():
-                        if isinstance(value, sessionmaker):
-                            session = value
-                            break
-                if args and hasattr(args[0], '__class__'):
-                    class_name = args[0].__class__.__name__
-                    logger.error(f"Error in {class_name}.{function_name}: {e}")
-                    if class_name == 'DataBase' or 'StateRequest' and session:
+            session = None
+            for arg in args:
+                if isinstance(arg, sessionmaker):
+                    session = arg
+                    break
+            function_name = func.__name__
+            if args and hasattr(args[0], '__class__'):
+                class_name = args[0].__class__.__name__
+                if class_name == 'DataAllDatasets' or 'StateRequest' and session:
+                    try:
+                        return func(*args, **kwargs)
+                    except Exception as e:
+                        function_name = func.__name__
+                        logger.error(f"Error in {function_name}: {e}")
                         session.rollback()
-                else:
+                        if debug:
+                            raise e
+                    finally:
+                        session.close()
+            else:
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
                     logger.error(f"Error in {function_name}: {e}")
-                if debug:
-                    raise e
+                    if debug:
+                        raise e
         return wrapper
     return decorator

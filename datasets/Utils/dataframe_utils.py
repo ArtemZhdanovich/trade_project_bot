@@ -74,7 +74,7 @@ def create_dataframe(data_list: dict) -> pd.DataFrame:
 
 def create_timestamp(time:Union[str, None]=None) -> int:
     if time is None:
-        return
+        return time
     formats = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d %H', '%Y-%m-%d']
     formated_time = None
     for fmt in formats:
@@ -97,14 +97,16 @@ def create_timestamp(time:Union[str, None]=None) -> int:
 
 # Можешь добавить рассчёт возможного кол-ва  баров по таймфрему чтобы ошибки не было при вызове after c limit=300
 def validate_get_data_params(
-    lengths:Optional[int] = None, load_data_before:Optional[str]=None, load_data_after:Optional[str]=None,
+    history:bool, lengths:Optional[int] = None, load_data_before:Optional[str]=None, load_data_after:Optional[str]=None,
     timeframe:Optional[str]=None) -> dict:
     with contextlib.suppress(Exception):
         load_data_after = create_timestamp(load_data_after)
     with contextlib.suppress(Exception):
         load_data_before = create_timestamp(load_data_before)
-    if isinstance(lengths, int) and lengths>300:
-        raise ValueError('Lenght 300 is max')
+    if not history and isinstance(lengths, int) and lengths > 100:
+        raise ValueError('Lenght 300 for method get candlestick history is max')
+    if history and isinstance(lengths, int) and lengths > 300:
+        raise ValueError('Lenght 100 for method get candlestick history is max')
     if isinstance(lengths, (str, type(None))):
         lengths = ''
     limit = lengths or ' '

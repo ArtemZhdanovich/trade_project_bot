@@ -13,7 +13,7 @@ after_timestamp = 1678886400000  # Unix-время (миллисекунды) д
 before_timestamp = ''  # Unix-время (миллисекунды) для конца интервала
 
 # Получите свечи (candlesticks)
-candlesticks = api.public.get_history_candlesticks(
+candlesticks = api.public.get_candlesticks(
     instId=symbol,
     after=after_timestamp,
     before=before_timestamp,

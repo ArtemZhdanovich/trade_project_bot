@@ -1,12 +1,11 @@
 #libs
-from sqlalchemy import Column, Integer, String, DateTime, Numeric, Boolean, Float
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import create_engine, MetaData, Column, Integer, String, DateTime, Numeric, Boolean, Float
+from sqlalchemy.sql import text
+from sqlalchemy.orm import declarative_base, sessionmaker
 #configs
 from configs.load_settings import LoadUserSettingData
-from baselogs.custom_decorators import log_exceptions
-from baselogs.custom_logger import create_logger
 
-logger = create_logger('ClassesCreation')
+
 Base = declarative_base()
 
 
@@ -14,12 +13,12 @@ class ClassCreation:
     def __init__(self):
         self.user_settings = LoadUserSettingData().load_user_settings()
 
-    @log_exceptions(logger)
+
     def create_classes(self, Base):
         classes = {}
         for inst_id in self.user_settings['instIds']:
             for timeframe in self.user_settings['timeframes']:
-                class_name = f"ChartsData_{inst_id}_{timeframe}"
+                class_name = f"{inst_id}_{timeframe}"
                 table_name = f"{inst_id}_{timeframe}"
                 class_ = type(class_name, (Base,), {
                     '__tablename__': table_name,
@@ -27,12 +26,12 @@ class ClassCreation:
                     'TIMESTAMP': Column(DateTime, primary_key=True),
                     'INSTRUMENT': Column(String),
                     'TIMEFRAME': Column(String),
-                    'OPEN': Column(Numeric(10, 4)),
-                    'CLOSE': Column(Numeric(10, 4)),
-                    'HIGH': Column(Numeric(10, 4)),
-                    'LOW': Column(Numeric(10, 4)),
-                    'VOLUME': Column(Numeric(10, 4)),
-                    'VOLUME_USDT': Column(Numeric(10, 4))
+                    'OPEN': Column(Numeric(30,10)),
+                    'CLOSE': Column(Numeric(30,10)),
+                    'HIGH': Column(Numeric(30,10)),
+                    'LOW': Column(Numeric(30,10)),
+                    'VOLUME': Column(Numeric(30,10)),
+                    'VOLUME_USDT': Column(Numeric(30,10))
                 })
                 classes[class_name] = class_
         return classes
@@ -41,11 +40,10 @@ class ClassCreation:
 #добавлена автоинкрементируемая ячейка для создания доступа к таймфрему в процессе родителе
 #теперь при создании объекта ордера, доступ к данным таймфрема можно будет получить по 
 # уникальному инкрементируемому id(в теории)-> Похуй
-class TradeUserData(Base):
-    __tablename__ = 'PositionAndOrders'
-    __table_args__ = {'extend_existing': True}
-    ID = Column(Integer, autoincrement=True)
-    ORDER_ID = Column(String, primary_key=True)
+class PositionAndOrders(Base):
+    __tablename__ = 'positions_and_orders'
+    ID = Column(Integer, autoincrement=True, primary_key=True)
+    ORDER_ID = Column(String, nullable=False)
     INSTRUMENT = Column(String)
     SIDE_OF_TRADE = Column(String)
     LEVERAGE = Column(Integer)
@@ -53,9 +51,9 @@ class TradeUserData(Base):
     CLOSE_TIME = Column(DateTime, nullable=True)
     STATUS = Column(Boolean)
     BALANCE = Column(Integer)
-    PRICE_OF_CONTRAC = Column(Float)
+    PRICE_OF_CONTRACT = Column(Float)
     NUMBER_OF_CONTRACTS = Column(Float)
-    MONEY_IN_DEAL = Column(Float, server_default='BALANCE*RISK_COEFFICIENT+FEE', nullable=True)
+    MONEY_IN_DEAL = Column(Float, nullable=True)
     ENTER_PRICE = Column(Float, nullable=True)
     ORDER_VOLUME = Column(Float)
     TAKEPROFIT_PRICE = Column(Float, nullable=True)
@@ -67,8 +65,9 @@ class TradeUserData(Base):
     RISK_COEFFICIENT = Column(Float)
     CLOSE_PRICE = Column(Float, nullable=True)
     FEE = Column(Float, nullable=True)
-    MONEY_INCOME = Column(Float, server_default='(ENTER_PRICE-CLOSE_PRICE)*LEVERAGE-FEE', nullable=True)
-    PERCENT_MONEY_INCOME = Column(Float, server_default='MONEY_INCOME/BALANCE*100', nullable=True)
+    MONEY_INCOME = Column(Float, nullable=True)
+    PERCENT_MONEY_INCOME = Column(Float, nullable=True)
+
 
 
 class SQLStateStorage(Base):
@@ -81,3 +80,8 @@ class SQLStateStorage(Base):
     ORDER_ID = Column(String, nullable=True)
     STRATEGY = Column(String)
     STATUS = Column(Boolean)
+
+
+engine = create_engine('postgresql://postgres:admin1234@localhost/trade_user_data')
+classes_dict = ClassCreation().create_classes(Base)
+Base.metadata.create_all(engine)
